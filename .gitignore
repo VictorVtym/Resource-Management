@@ -1,5 +1,3 @@
 .venv/
-.venv
-.venv/
-/.venv/
+app/.env
 prompt.py

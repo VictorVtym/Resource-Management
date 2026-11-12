@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=BBH+Bartle&family=Great+Vibes&family=Libre+Barcode+128+Text&family=Monofett&family=Nabla&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Rubik+80s+Fade&family=Rubik+Glitch&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}?v=superfresh123">
+    <title>Управление персоналом</title>
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="container">
+            <div class="header__inner">
+                <h1 class="logo-text">
+                    HiTech-Club
+                </h1>
+
+                <nav class="nav">
+                    <a class="nav__link" href="{{ url_for('employees') }}">Сотрудники</a>
+                    <a class="nav__link" href="{{ url_for('schedule_page') }}">График работы</a>
+                    <a class="nav__link" href="{{ url_for('sales_page') }}">Продажи</a>
+                    <a class="nav__link" href="{{ url_for('salary_page') }}">Зарплата</a>
+                    <a class="nav__link" href="{{ url_for('achievements_page') }}">Достижения</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>

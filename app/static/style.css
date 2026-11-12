@@ -1,5 +1,191 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
-    background-color: #0a205e;
+    font-family: "Open Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgb(85, 32, 32);
+    margin: 0;
+    background-color: #2d3333;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: border-box;
+}
+
+/* Container
+============================*/
+.container {
+    width: 100%;
+    max-width: 1170px;
+    margin: 0 auto;
+}
+
+
+/* Container-employee
+============================*/
+.container-employee {
+    width: 100%;
+    max-width: 1170px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.main-employee {
+    flex: 3;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-width: 300px;
+}
+
+.aside-employee {
+    flex: 1;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-width: 250px;
+}
+
+#employees-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Размер отступа между элементами */
+}
+
+/* Дополнительно: чтобы поля выглядели аккуратно и одинаково по ширине */
+#employees-form input,
+#employees-form select,
+#employees-form button {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#employees-form button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#employees-form button:hover {
+  background-color: #0056b3;
+}
+
+.aside-employee h3 {
+  text-align: center;
+  margin-top: 0;       /* Убирает лишний отступ сверху внутри карточки */
+  margin-bottom: 16px; /* Добавляет аккуратный отступ до первого поля */
+}
+
+/* Header
+============================*/
+.header {
+    width: 100%;
+    height: 100px;
+    background-color: #2d3333;
+
+    padding-bottom: 5px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1000px;
+}
+
+.header__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0px 0px;
+
+    border-bottom: 2px solid #607f85;
+}
+
+.logo {
+    width: 100px;
+    height: auto;
+}
+
+.logo-text {
+    font-family: "Open Sans", sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    /*color: #607f85; /* Цвет в тон вашей линии в шапке */
+    color: rgb(170, 179, 125);
+    position: relative;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    /*-webkit-text-stroke: 0.3px whitesmoke; /* Тонкая граница голубого цвета */
+}
+
+/* Создаем скрытую полосу под логотипом */
+.logo-text::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background-color: #00d2ff;
+    transition: width 0.4s ease;
+}
+
+/* При наведении текст загорается, а полоса выезжает слева направо */
+.logo-text:hover {
+    color: #fff;
+}
+.logo-text:hover::after {
+    width: 100%;
+}
+
+
+/* Nav
+============================*/
+.nav {
+    display: flex;
+    font-size: 15px;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.nav__link {
+    color: white;
+    margin-left: 30px;
+    text-decoration: none;
+    opacity: 0.7;
+
+    transition: opacity 0.1s linear;
+}
+
+.nav__link:first-child {
+    margin-left: 0px;
+}
+
+.nav__link:last-child {
+    margin-right: 10px;
+}
+
+.nav__link:hover {
+    opacity: 1;
+    color: wheat;
+}
+
+
+/* Сontent
+============================*/
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content:flex-start;
+    height: 750px;
+    padding-top: 50px;
+    background-color: #aca591;
+    padding-top: 140px;
+
 }

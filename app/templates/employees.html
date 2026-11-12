@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Управление сотрудниками | HiTech-Club{% endblock %}
+
+{% block content %}
+        <div class="container-employee">
+            <div class="main-employee">
+                <article>
+                    <h2>Заголовок 1</h2>
+                    <p>Текст 1</p>
+                </article>
+
+                <section style="margin-top: 20px;">
+                    <h2>Заголовок 2</h2>
+                    <p>Текст 2</p>
+                </section>
+            </div>
+
+            <div class="aside-employee">
+                <h3>Принять нового сотрудника</h3>
+                <form id="employees-form">
+                    <input
+                        type="text"
+                        name="first_name"
+                        id="first-name-input"
+                        placeholder="Имя"
+                        minlength="2"
+                        pattern="[А-Яа-яЁёA-Za-z\-]+"
+                        title="Имя должно содержать минимум 2 символа и состоять только из букв"
+                        required
+                    >
+
+                    <input
+                        type="text"
+                        name="last_name"
+                        id="last-name-input"
+                        placeholder="Фамилия"
+                        minlength="2"
+                        pattern="[А-Яа-яЁёA-Za-z\-]+"
+                        title="Имя должно содержать минимум 2 символа и состоять только из букв"
+                        required
+                    >
+
+                    <select name="status" id="status-select" required>
+                      <option value="">Должность</option>
+                      <option value="стажёр">стажёр</option>
+                      <option value="менеджер">менеджер</option>
+                      <option value="ведущий менеджер">ведущий менеджер</option>
+                    </select>
+                    <button type="submit">Оформить</button>
+                </form>
+            </div>
+        </div>
+{% endblock %}

@@ -5,15 +5,36 @@
 {% block content %}
         <div class="container-employee">
             <div class="main-employee">
-                <article>
-                    <h2>Заголовок 1</h2>
-                    <p>Текст 1</p>
-                </article>
+                <h2>Список сотрудников</h2>
 
-                <section style="margin-top: 20px;">
-                    <h2>Заголовок 2</h2>
-                    <p>Текст 2</p>
-                </section>
+                <table class="employees-table">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Должность</th>
+                            <th>Оклад</th>
+                            <th>План часов</th>
+                            <th>Дата найма</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employees-tbody">
+                        {% if employees %}
+                            {% for emp_id, emp in employees.items() %}
+                                <tr>
+                                    <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                                    <td> {{ emp.status }}</td>
+                                    <td>{{ emp.base_salary }}</td>
+                                    <td> {{ emp.hours_plan }}</td>
+                                    <td>{{ emp.hire_date }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="empty-table-msg">Сотрудников пока нет.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
 
             <div class="aside-employee">
@@ -47,6 +68,7 @@
                       <option value="менеджер">менеджер</option>
                       <option value="ведущий менеджер">ведущий менеджер</option>
                     </select>
+    
                     <button type="submit">Оформить</button>
                 </form>
             </div>

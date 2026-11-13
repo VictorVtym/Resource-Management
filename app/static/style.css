@@ -17,7 +17,7 @@ body {
 ============================*/
 .container {
     width: 100%;
-    max-width: 1170px;
+    max-width: 1280px;
     margin: 0 auto;
 }
 
@@ -26,7 +26,7 @@ body {
 ============================*/
 .container-employee {
     width: 100%;
-    max-width: 1170px;
+    max-width: 1280px;
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
@@ -82,6 +82,37 @@ body {
   text-align: center;
   margin-top: 0;       /* Убирает лишний отступ сверху внутри карточки */
   margin-bottom: 16px; /* Добавляет аккуратный отступ до первого поля */
+}
+
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+/* Выравнивание для всех ячеек (по центру) */
+.employees-table th,
+.employees-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: center;
+}
+
+/* Выравнивание только для первого столбца с ФИО (по левому краю) */
+.employees-table th:first-child,
+.employees-table td:first-child {
+    text-align: left;
+}
+
+.employees-table th {
+    background-color: #f4f6f8;
+    font-weight: 600;
+}
+
+.empty-table-msg {
+    text-align: center;
+    color: #777;
+    padding: 20px;
 }
 
 /* Header

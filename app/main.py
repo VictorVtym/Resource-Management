@@ -16,6 +16,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 templates = Jinja2Templates(directory="app/templates")
 
+# Временное хранилище сотрудников (словарь: {id: данные_сотрудника})
+EMPLOYEES_DB: dict[str, dict] = {}
+
 # 1. Ограничиваем возможные значения статуса
 class EmployeeStatus(str, Enum):
     INTERN = "стажёр"
@@ -49,7 +52,16 @@ class EmployeeSchema(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def employees(request: Request):
-    return templates.TemplateResponse(request=request, name="employees.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="employees.html",
+        context={"employees": EMPLOYEES_DB}
+        )
+
+# Дополнительный API-эндпоинт для получения списка сотрудников в формате JSON
+@app.get("/api/employees")
+async def get_employees():
+    return EMPLOYEES_DB
 
 # Роут для Графика работы
 @app.get("/schedule", response_class=HTMLResponse)
@@ -76,17 +88,23 @@ async def achievements_page(request: Request):
 async def create_task(employee: EmployeeSchema):
     # Достаем параметры по ключу статуса
     conditions = STATUS_CONFIG[employee.status]
+    emp_id = str(uuid4())
 
     # Доступ к данным payload осуществляется через точку: task.title
-    print(f"Получен JSON Payload. Заголовок: {employee.first_name} {employee.last_name}")
+    # print(f"Получен JSON Payload. Заголовок: {employee.first_name} {employee.last_name}")
 
-    return {
-        "id": str(uuid4()),
+    new_employee = {
+        "id": emp_id,
         "first_name": employee.first_name,
         "last_name": employee.last_name,
-        "status": employee.status,
-        "hire_date": date.today(),
+        "status": employee.status.value,
+        "hire_date": str(date.today()),
         "fire_date": employee.fire_date,
         "base_salary": conditions["base_salary"],
         "hours_plan": conditions["hours_plan"],
     }
+
+    # Сохраняем в словарь по ключу id
+    EMPLOYEES_DB[emp_id] = new_employee
+
+    return new_employee

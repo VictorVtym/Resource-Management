@@ -1,3 +1,6 @@
 .venv/
 app/.env
 prompt.py
+__pycache__
+app/test.py
+__pycache__/

@@ -3,6 +3,55 @@
 {% block title %}Управление сотрудниками | HiTech-Club{% endblock %}
 
 {% block content %}
-Это страница с графиком
+        <div class="container-schedule">
+            <h2>Сформируйте график работы:</h2>
+
+            <table class="schedule-table">
+
+                <thead>
+                    <tr>
+                        <th rowspan="2">ФИО</th>
+                        <th colspan="10">Периоды</th>
+                    </tr>
+
+                    <tr>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>5</th>
+                        <th>6</th>
+                        <th>7</th>
+                        <th>8</th>
+                        <th>9</th>
+                        <th>10</th>
+                    </tr>
+                </thead>
+
+                <tbody id="schedule-tbody">
+                    {% if employees %}
+                        {% for emp_id, emp in employees.items() %}
+                            <tr>
+                                <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                                <td><input type="checkbox" id="p1" name="p1"></td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="10" class="empty-table-msg">Сотрудников пока нет.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+            </table>
+        </div>
 
 {% endblock %}

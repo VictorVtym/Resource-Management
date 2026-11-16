@@ -13,76 +13,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Container
-============================*/
-.container {
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-}
-
-
-/* Container-employee
-============================*/
-.container-employee {
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.main-employee {
-    flex: 3;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    min-width: 300px;
-}
-
-.aside-employee {
-    flex: 1;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    min-width: 250px;
-}
-
-#employees-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px; /* Размер отступа между элементами */
-}
-
-/* Дополнительно: чтобы поля выглядели аккуратно и одинаково по ширине */
-#employees-form input,
-#employees-form select,
-#employees-form button {
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-#employees-form button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-#employees-form button:hover {
-  background-color: #0056b3;
-}
-
-.aside-employee h3 {
-  text-align: center;
-  margin-top: 0;       /* Убирает лишний отступ сверху внутри карточки */
-  margin-bottom: 16px; /* Добавляет аккуратный отступ до первого поля */
-}
 
 .employees-table {
     width: 100%;
@@ -176,7 +106,7 @@ body {
 }
 
 
-/* Nav
+/* Панель навигации
 ============================*/
 .nav {
     display: flex;
@@ -208,6 +138,15 @@ body {
 }
 
 
+/* Container
+============================*/
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+
 /* Сontent
 ============================*/
 .content {
@@ -219,4 +158,266 @@ body {
     background-color: #aca591;
     padding-top: 140px;
 
+}
+
+
+/* Страница "Сотрудники": общие блоки и форма ввода
+============================*/
+
+/* Общий блок, включающщий два раздела: таблица (левый блок) и поля для ввода (правый блок) */
+.container-employee {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* Леывый блок для отображения таблицы */
+.main-employee {
+    flex: 3;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-width: 300px;
+}
+
+/* Правый блок для отображения полей для ввода данных */
+.aside-employee {
+    flex: 1;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-width: 250px;
+}
+
+/* Форма для ввода данных */
+#employees-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Размер отступа между элементами */
+}
+
+
+/* Страница "Сотрудники": левый блок, оформление таблицы для вывода информации о принятых сотрудниках
+============================*/
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+/* Одна сплошная граница на всю строку */
+.employees-table thead tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Одна сплошная граница на всю строку */
+.employees-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Выравнивание для всех ячеек (по центру) */
+.employees-table th,
+.employees-table td {
+    padding: 12px 14px;
+    /* border-bottom: 1px solid #e0e0e0; */
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Выравнивание только для первого столбца с ФИО (по левому краю) */
+.employees-table th:first-child,
+.employees-table td:first-child {
+    text-align: left;
+}
+
+.employees-table th {
+    background-color: #cfccc3e0;
+    font-weight: 600;
+}
+
+.empty-table-msg {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+}
+
+/* Зачёркнутое ФИО для уволенных сотрудников */
+.fired-name {
+    text-decoration: line-through;
+}
+
+
+/* Страница "Сотрудники": в левом блоке стили для кнопок "редактировать", "уволить", "удалить"
+============================*/
+
+/* Стили для окна кнопок */
+.actions-wrapper {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Стили для самих кнопок */
+.btn-action {
+    position: relative;
+    display: inline-block;  /* Вместо flex — кнопки сами встают на базовую линию текста */
+    vertical-align: middle; /* Выравнивает кружочек строго по центру строки текста */
+    width: 16px;
+    height: 16px;
+    margin: 0 4px;          /* Отступы между кружочками слева и справа */
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-action:hover {
+    transform: scale(1.25); /* Лёгкое увеличение при наведении */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.btn-edit {
+    background-color: #28a745; /* Зелёный */
+}
+
+.btn-fire {
+    background-color: #fd7e14; /* Оранжевый */
+}
+
+.btn-delete {
+    background-color: #dc3545; /* Красный */
+}
+
+/* Всплывающая надпись (тултип) при наведении на кпонку */
+.btn-action::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px); /* Появляется строго над кружочком */
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background-color: #2d3333; /* В цвет вашей шапки сайта */
+    color: #fff;
+    font-family: "Open Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: lowercase;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    pointer-events: none;      /* Чтобы подсказка не мешала клику */
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 100;
+}
+
+/* Маленький треугольник-указатель под подсказкой
+.btn-action::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 3px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 5px solid transparent;
+    border-top-color: #2d3333;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 100;
+}*/
+
+/* Плавное появление при наведении */
+.btn-action:hover::after,
+.btn-action:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+
+/* Страница "Сотрудники": правый блок, поля для ввода данных
+============================*/
+
+/* Дополнительно: чтобы поля выглядели аккуратно и одинаково по ширине */
+#employees-form input,
+#employees-form select,
+#employees-form button {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+
+/* Оформление кнопки Добавить */
+#employees-form button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#employees-form button:hover {
+  background-color: #0056b3;
+}
+
+/* Оформление надписи "Принять нового сотрудника" */
+.aside-employee h3 {
+  text-align: center;
+  margin-top: 0;       /* Убирает лишний отступ сверху внутри карточки */
+  margin-bottom: 16px; /* Добавляет аккуратный отступ до первого поля */
+}
+
+
+/* Страница "График работы"
+============================*/
+
+/* Общий блок */
+.container-schedule {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    gap: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-height: 250px;
+    padding: 20px;
+}
+
+/* Страница "График работы": оформление таблицы
+============================*/
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+/* Одна сплошная граница на всю строку */
+.schedule-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Выравнивание для всех ячеек (по центру) */
+.schedule-table th,
+.schedule-table td {
+    padding: 6px 14px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Выравнивание только для первого столбца с ФИО (по левому краю) */
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+    text-align: left;
+}
+
+.schedule-table th {
+    background-color: #cfccc3e0;
+    font-weight: 600;
 }

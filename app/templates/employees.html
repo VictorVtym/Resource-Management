@@ -8,29 +8,40 @@
                 <h2>Список сотрудников</h2>
 
                 <table class="employees-table">
+
                     <thead>
                         <tr>
                             <th>ФИО</th>
-                            <th>Должность</th>
+                            <th>Статус</th>
                             <th>Оклад</th>
                             <th>План часов</th>
                             <th>Дата найма</th>
+                            <th>Дата увольнения</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
+
                     <tbody id="employees-tbody">
                         {% if employees %}
                             {% for emp_id, emp in employees.items() %}
                                 <tr>
                                     <td>{{ emp.first_name }} {{ emp.last_name }}</td>
-                                    <td> {{ emp.status }}</td>
+                                    <td> {{ emp.status.value }}</td>
                                     <td>{{ emp.base_salary }}</td>
                                     <td> {{ emp.hours_plan }}</td>
                                     <td>{{ emp.hire_date }}</td>
+                                    <td>{{ emp.fire_date or '-'}}</td>
+                                    <td class="actions-wrapper">
+                                        <button type="button" class="btn-action btn-edit" data-tooltip="редактировать" aria-label="редактировать" onclick="startEdit('{{ emp_id }}')"></button>
+                                        <button type="button" class="btn-action btn-fire" data-tooltip="уволить" aria-label="уволить" onclick="fireEmployee('{{ emp_id }}')"></button>
+                                        <button type="button" class="btn-action btn-delete" data-tooltip="удалить" aria-label="удалить" onclick="deleteEmployee('{{ emp_id }}')"></button>
+                                    </td>
+
                                 </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="5" class="empty-table-msg">Сотрудников пока нет.</td>
+                                <td colspan="7" class="empty-table-msg">Сотрудников пока нет.</td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -38,7 +49,7 @@
             </div>
 
             <div class="aside-employee">
-                <h3>Принять нового сотрудника</h3>
+                <h3 id="form-title">Принять нового сотрудника</h3>
                 <form id="employees-form">
                     <input
                         type="text"
@@ -68,8 +79,8 @@
                       <option value="менеджер">менеджер</option>
                       <option value="ведущий менеджер">ведущий менеджер</option>
                     </select>
-    
-                    <button type="submit">Оформить</button>
+
+                    <button type="submit" id="form-submit-btn">Оформить</button>
                 </form>
             </div>
         </div>

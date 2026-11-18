@@ -1,57 +1,72 @@
 {% extends 'base.html' %}
-
-{% block title %}Управление сотрудниками | HiTech-Club{% endblock %}
+{% block title %}График работы | HiTech-Club{% endblock %}
 
 {% block content %}
-        <div class="container-schedule">
-            <h2>Сформируйте график работы:</h2>
+<div class="container-schedule">
+    <h2>Сформируйте график работы:</h2>
 
-            <table class="schedule-table">
+    {% if employees %}
+    <form id="schedule-form">
+        <table class="schedule-table schedule-grid-table">
+            <thead>
+                <tr>
+                    <th rowspan="2">ФИО</th>
+                    <th colspan="10">Периоды</th>
+                </tr>
 
-                <thead>
-                    <tr>
-                        <th rowspan="2">ФИО</th>
-                        <th colspan="10">Периоды</th>
-                    </tr>
-
-                    <tr>
-                        <th>1</th>
-                        <th>2</th>
-                        <th>3</th>
-                        <th>4</th>
-                        <th>5</th>
-                        <th>6</th>
-                        <th>7</th>
-                        <th>8</th>
-                        <th>9</th>
-                        <th>10</th>
-                    </tr>
-                </thead>
-
-                <tbody id="schedule-tbody">
-                    {% if employees %}
-                        {% for emp_id, emp in employees.items() %}
-                            <tr>
-                                <td>{{ emp.first_name }} {{ emp.last_name }}</td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                                <td><input type="checkbox" id="p1" name="p1"></td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr>
-                            <td colspan="10" class="empty-table-msg">Сотрудников пока нет.</td>
-                            </tr>
+                <tr>
+                    {% for i in range(1, 11) %}
+                    <th>{{ i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="schedule-tbody">
+                {% for emp_id, emp in employees.items() %}
+                {% set is_saved = emp_id in schedule %}
+                {% set emp_periods = schedule.get(emp_id, [False]*10) %}
+                <tr data-employee-id="{{ emp_id }}">
+                    <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                    {% for i in range(10) %}
+                    <td class="period-cell" data-checked="{{ 'true' if emp_periods[i] else 'false' }}">
+                        {% if is_saved %}
+                            {% if emp_periods[i] %}
+                                <span class="status-check">✓</span>
+                            {% else %}
+                                <span class="status-dash">—</span>
+                            {% endif %}
+                        {% else %}
+                            <input type="checkbox" class="period-checkbox">
                         {% endif %}
-                    </tbody>
-            </table>
-        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
+        <div style="margin-top: 20px; text-align: right;">
+            <button
+                type="submit"
+                id="save-schedule-btn"
+                class="btn-save-schedule"
+                {% if schedule %}style="display: none;"{% endif %}
+            >
+                Отправить
+            </button>
+            <button
+                type="button"
+                id="edit-schedule-btn"
+                class="btn-edit-schedule"
+                {% if not schedule %}style="display: none;"{% endif %}
+            >
+                Редактировать график
+            </button>
+        </div>
+    </form>
+    {% else %}
+    <p class="empty-table-msg">Активных сотрудников пока нет.</p>
+    {% endif %}
+</div>
+
+<script src="/static/schedule.js"></script>
 {% endblock %}

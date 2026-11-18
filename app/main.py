@@ -1,5 +1,6 @@
 from uuid import uuid4 # позволяет генерировать уникальные id
 from datetime import date
+import random
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
@@ -19,6 +20,13 @@ templates = Jinja2Templates(directory="app/templates")
 # Временное хранилище сотрудников (словарь: {id: данные_сотрудника})
 EMPLOYEES_DB: dict[str, dict] = {}
 
+# Временное хранилище графика: {employee_id: [True, False, ... (10 элементов)]}
+SCHEDULE_DB: dict[str, list[bool]] = {}
+
+# Временное хранилище итоговых продаж и детализации по периодам
+# Формат: {emp_id: {"periods": [int | None, ...], "total": int}}
+SALES_DB: dict[str, dict] = {}
+
 MAX_ACTIVE_EMPLOYEES = 5
 
 # 1. Ограничиваем возможные значения статуса
@@ -30,10 +38,17 @@ class EmployeeStatus(str, Enum):
 
 # 2. Задаем настройки для каждого статуса в одном месте
 STATUS_CONFIG = {
-    EmployeeStatus.INTERN: {"base_salary": 30000, "hours_plan": 5},
-    EmployeeStatus.MANAGER: {"base_salary": 50000, "hours_plan": 6},
-    EmployeeStatus.LEAD_MANAGER: {"base_salary": 60000, "hours_plan": 6},
-    EmployeeStatus.FIRED: {"base_salary": 0, "hours_plan": 0},
+    EmployeeStatus.INTERN: {"base_salary": 30000, "hours_plan": 5, "sales_plan": 50000},
+    EmployeeStatus.MANAGER: {"base_salary": 50000, "hours_plan": 6, "sales_plan": 100000},
+    EmployeeStatus.LEAD_MANAGER: {"base_salary": 60000, "hours_plan": 6, "sales_plan": 120000},
+    EmployeeStatus.FIRED: {"base_salary": 0, "hours_plan": 0, "sales_plan": 0},
+}
+
+# Диапазоны случайных значений для расчёта продаж по статусам
+SALES_RANGES = {
+    EmployeeStatus.INTERN: (5000, 14000),
+    EmployeeStatus.MANAGER: (12000, 21000),
+    EmployeeStatus.LEAD_MANAGER: (15000, 24000),
 }
 
 # задаём сущность "сотрудник", где указываем все поля (переменные), которые должны должны быть у сотрудника
@@ -46,6 +61,26 @@ class EmployeeSchema(BaseModel):
     fire_date: date | None = None
     base_salary: int
     hours_plan: int
+    sales_plan: int
+
+
+# Pydantic-схема для валидации графика одного сотрудника
+class EmployeeScheduleSchema(BaseModel):
+    employee_id: str
+    periods: list[bool] = Field(
+        ...,
+        min_length=10,
+        max_length=10,
+        description="Список из 10 булевых значений (работает/не работает)"
+    )
+
+    @field_validator("periods")
+    @classmethod
+    def check_at_least_one_shift(cls, value: list[bool]) -> list[bool]:
+        if not any(value):
+            raise ValueError("График заполнен некорректно: у каждого сотрудника должна быть хоть одна смена")
+        return value
+
 
 # Pydantic-схема. Здесь мы описываем те переменные, которые мы
 # должны получить от сайта при заведении нового сотрудника
@@ -116,14 +151,14 @@ async def get_employees():
     return EMPLOYEES_DB
 
 # Отображение страницы с графиком работы
-@app.get("/schedule", response_class=HTMLResponse)
-async def schedule_page(request: Request):
-    return templates.TemplateResponse(request=request, name="schedule.html")
+#@app.get("/schedule", response_class=HTMLResponse)
+#async def schedule_page(request: Request):
+#    return templates.TemplateResponse(request=request, name="schedule.html")
 
 # Отображение страницы с планом и фактом продаж
-@app.get("/sales", response_class=HTMLResponse)
-async def sales_page(request: Request):
-    return templates.TemplateResponse(request=request, name="sales.html")
+#@app.get("/sales", response_class=HTMLResponse)
+#async def sales_page(request: Request):
+#    return templates.TemplateResponse(request=request, name="sales.html")
 
 # Отображение страницы с зарплатой
 @app.get("/salary", response_class=HTMLResponse)
@@ -158,7 +193,8 @@ async def create_employee(employee: EmployeeCreateSchema) -> EmployeeSchema:
         hire_date=str(date.today()),
         fire_date=None,
         base_salary=conditions["base_salary"],
-        hours_plan=conditions["hours_plan"]
+        hours_plan=conditions["hours_plan"],
+        sales_plan=conditions["sales_plan"]
     )
 
     # Сохраняем в словарь по ключу id
@@ -219,3 +255,152 @@ async def delete_employee(employee_id: str):
     deleted_employee = EMPLOYEES_DB.pop(employee_id)
 
     return deleted_employee
+
+
+# 2. Обновляем рендер страницы: передаём только НЕ уволенных сотрудников и текущий график
+@app.get("/schedule", response_class=HTMLResponse)
+async def schedule_page(request: Request):
+    active_employees = {
+        emp_id: emp
+        for emp_id, emp in EMPLOYEES_DB.items()
+        if emp.status != EmployeeStatus.FIRED
+    }
+    return templates.TemplateResponse(
+        request=request,
+        name="schedule.html",
+        context={
+            "employees": active_employees,
+            "schedule": SCHEDULE_DB
+        }
+    )
+
+
+# 3. API-эндпоинт для сохранения графика
+@app.post("/api/schedule")
+async def save_schedule(items: list[EmployeeScheduleSchema]):
+    for item in items:
+        if item.employee_id not in EMPLOYEES_DB:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Сотрудник с ID {item.employee_id} не найден"
+            )
+        SCHEDULE_DB[item.employee_id] = item.periods
+
+    return {"status": "ok", "saved_count": len(items)}
+
+
+# Обновляем рендер страницы продаж (передаём сохранённые данные, если уже нажимали «Сформировать»)
+@app.get("/sales", response_class=HTMLResponse)
+async def sales_page(request: Request):
+    active_employees = {
+        emp_id: emp
+        for emp_id, emp in EMPLOYEES_DB.items()
+        if emp.status != EmployeeStatus.FIRED
+    }
+    total_plan = sum(emp.sales_plan for emp in active_employees.values())
+    company_sales = sum(
+        SALES_DB[emp_id]["total"]
+        for emp_id in active_employees
+        if emp_id in SALES_DB
+    )
+
+    # Считаем сумму продаж по каждому из 10 периодов
+    period_totals = [0] * 10
+    for emp_id in active_employees:
+        if emp_id in SALES_DB:
+            for i, val in enumerate(SALES_DB[emp_id]["periods"]):
+                if val is not None:
+                    period_totals[i] += val
+
+    return templates.TemplateResponse(
+        request=request,
+        name="sales.html",
+        context={
+            "employees": active_employees,
+            "sales": SALES_DB,
+            "total_plan": total_plan,
+            "company_sales": company_sales,
+            "period_totals": period_totals,
+        }
+    )
+
+
+# Эндпоинт генерации и сохранения факта продаж по нажатию кнопки «Сформировать»
+@app.post("/api/sales/generate")
+async def generate_sales():
+    active_employees = {
+        emp_id: emp
+        for emp_id, emp in EMPLOYEES_DB.items()
+        if emp.status != EmployeeStatus.FIRED
+    }
+
+    if not active_employees:
+        raise HTTPException(status_code=400, detail="Нет активных сотрудников")
+
+    # Проверяем, что для всех работающих сотрудников заполнен график
+    missing_schedule = [
+        f"{emp.first_name} {emp.last_name}"
+        for emp_id, emp in active_employees.items()
+        if emp_id not in SCHEDULE_DB
+    ]
+    if missing_schedule:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Сначала сформируйте график работы для: {', '.join(missing_schedule)}"
+        )
+
+    plan_rows = []
+    fact_rows = []
+    total_company_plan = 0
+    total_company_sales = 0
+    period_totals = [0] * 10  # <-- Суммы по каждому из 10 периодов
+
+    for emp_id, emp in active_employees.items():
+        full_name = f"{emp.first_name} {emp.last_name}"
+        total_company_plan += emp.sales_plan
+
+        plan_rows.append({
+            "employee_id": emp_id,
+            "full_name": full_name,
+            "status": emp.status.value,
+            "sales_plan": emp.sales_plan,
+        })
+
+        # Расчёт факта продаж по 10 периодам
+        schedule_periods = SCHEDULE_DB[emp_id]
+        min_val, max_val = SALES_RANGES[emp.status]
+        emp_periods = []
+        emp_total = 0
+
+        for idx, is_working in enumerate(schedule_periods):
+            if is_working:
+                val1 = random.randint(min_val, max_val)
+                val2 = random.randint(min_val, max_val)
+                sale_amount = round((val1 + val2) / 2)
+                emp_periods.append(sale_amount)
+                emp_total += sale_amount
+                period_totals[idx] += sale_amount  # <-- Прибавляем к итогу периода
+            else:
+                emp_periods.append(None)
+
+        # Сохраняем данные на сервере
+        SALES_DB[emp_id] = {
+            "periods": emp_periods,
+            "total": emp_total,
+        }
+
+        total_company_sales += emp_total
+        fact_rows.append({
+            "employee_id": emp_id,
+            "full_name": full_name,
+            "periods": emp_periods,
+            "total": emp_total,
+        })
+
+    return {
+        "plan_rows": plan_rows,
+        "total_company_plan": total_company_plan,
+        "fact_rows": fact_rows,
+        "period_totals": period_totals,  # <-- Возвращаем на фронтенд
+        "total_company_sales": total_company_sales,
+    }

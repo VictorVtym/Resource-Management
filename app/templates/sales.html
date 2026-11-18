@@ -1,8 +1,83 @@
 {% extends 'base.html' %}
-
-{% block title %}Управление сотрудниками | HiTech-Club{% endblock %}
+{% block title %}План и факт продаж | HiTech-Club{% endblock %}
 
 {% block content %}
-Это страница продаж
+<div class="container-schedule">
+    <div class="sales-header">
+        <h2>План и факт продаж</h2>
+        <button type="button" id="generate-sales-btn" class="btn-save-schedule">Сформировать</button>
+    </div>
 
+    {% set has_sales = sales|length > 0 %}
+    <div id="sales-tables-wrapper" {% if not has_sales %}style="display: none;"{% endif %}>
+
+        <!-- Таблица 1: План продаж -->
+        <h3>План продаж</h3>
+        <table class="schedule-table sales-plan-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>План продаж</th>
+                </tr>
+            </thead>
+            <tbody id="sales-plan-tbody">
+                {% if has_sales %}
+                    {% for emp_id, emp in employees.items() %}
+                    <tr>
+                        <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                        <td>{{ emp.status.value }}</td>
+                        <td>{{ "{:,}".format(emp.sales_plan).replace(",", " ") }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="summary-row">
+                        <td colspan="2">План по компании</td>
+                        <td>{{ "{:,}".format(total_plan).replace(",", " ") }}</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Таблица 2: Факт продаж -->
+        <h3 style="margin-top: 30px;">Факт продаж</h3>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th rowspan="2">ФИО</th>
+                    <th colspan="10">Периоды</th>
+                    <th rowspan="2">Итого</th>
+                </tr>
+
+                <tr>
+                    {% for i in range(1, 11) %}
+                    <th>{{ i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="sales-fact-tbody">
+                {% if has_sales %}
+                    {% for emp_id, emp in employees.items() %}
+                    {% set emp_sales = sales.get(emp_id) %}
+                    <tr>
+                        <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                        {% for val in emp_sales.periods %}
+                        <td class="sales-num">{{ "{:,}".format(val).replace(",", " ") if val is not none else "" }}</td>
+                        {% endfor %}
+                        <td class="sales-num"><strong>{{ "{:,}".format(emp_sales.total).replace(",", " ") }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="summary-row">
+                        <td>Продажи по компании</td>
+                        {% for p_total in period_totals %}
+                        <td class="sales-num">{{ "{:,}".format(p_total).replace(",", " ") if p_total > 0 else "" }}</td>
+                        {% endfor %}
+                        <td class="sales-num">{{ "{:,}".format(company_sales).replace(",", " ") }}</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/static/sales.js"></script>
 {% endblock %}

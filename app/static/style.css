@@ -421,3 +421,122 @@ body {
     background-color: #cfccc3e0;
     font-weight: 600;
 }
+
+/* Выравнивание первого периода (цифра 1 во второй строке шапки) по центру */
+.schedule-grid-table thead tr:nth-child(2) th:first-child {
+    text-align: center;
+}
+
+/* Одинаковая ширина всех 10 колонок периодов в графике */
+.schedule-grid-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.schedule-grid-table thead tr:first-child th:first-child,
+.schedule-grid-table tbody td:first-child {
+    width: 240px;
+}
+
+/* Кнопка для отправки данных */
+.btn-save-schedule {
+    padding: 10px 20px;
+    font-size: 14px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-save-schedule:hover {
+    background-color: #5a6268;
+}
+
+/* Значки статуса в графике работы */
+.status-check {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.status-dash {
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* Кнопка редактирования графика */
+.btn-edit-schedule {
+    padding: 10px 20px;
+    font-size: 14px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-edit-schedule:hover {
+    background-color: #5a6268;
+}
+
+
+/* Страница "Продажи"
+============================*/
+.sales-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.sales-header h2 {
+    margin: 0;
+}
+
+.sales-plan-table {
+    max-width: 500px;
+}
+
+.summary-row {
+    background-color: #e6ecd8;
+    font-weight: 700;
+}
+
+/* Убираем фиксированную высоту 750px у .content, чтобы две таблицы не вылезали за фон */
+.content {
+    height: auto;
+    min-height: 750px;
+    padding-bottom: 40px;
+}
+
+/* Одинаковая ширина колонок периодов в таблице "Факт продаж" */
+.sales-fact-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Ширина первой колонки (ФИО) */
+.sales-fact-table th:first-child,
+.sales-fact-table td:first-child {
+    width: 190px;
+}
+
+/* Ширина последней колонки (Итого) */
+.sales-fact-table th:last-child,
+.sales-fact-table td:last-child {
+    width: 105px;
+}
+
+/* Уменьшенные отступы и шрифт для цифр в периодах */
+.sales-fact-table th,
+.sales-fact-table td {
+    padding: 8px 4px;
+}
+
+.sales-num {
+    font-size: 12px;
+    white-space: nowrap;
+}

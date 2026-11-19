@@ -51,6 +51,7 @@ SALES_RANGES = {
     EmployeeStatus.LEAD_MANAGER: (15000, 24000),
 }
 
+
 # задаём сущность "сотрудник", где указываем все поля (переменные), которые должны должны быть у сотрудника
 class EmployeeSchema(BaseModel):
     employee_id: str
@@ -134,6 +135,23 @@ class EmployeeUpdateSchema(BaseModel):
         return cleaned_value
 
 
+def get_active_employees(
+        db: dict[str, EmployeeSchema] = EMPLOYEES_DB,
+        ) -> dict[str, EmployeeSchema]:
+    return {
+        emp_id: emp
+        for emp_id, emp in db.items()
+        if emp.status != EmployeeStatus.FIRED
+    }
+
+
+def check_active_employees_limit(
+    detail: str = f"Нельзя оформить больше {MAX_ACTIVE_EMPLOYEES} работающих сотрудников",
+) -> None:
+    if len(get_active_employees()) >= MAX_ACTIVE_EMPLOYEES:
+        raise HTTPException(status_code=400, detail=detail)
+
+
 # Выводим данные о сотрудниках на страницу сайта. Эта фнукция нужна для передачи информации браузеру (html)
 @app.get("/", response_class=HTMLResponse)
 async def employees(request: Request):
@@ -150,16 +168,6 @@ async def employees(request: Request):
 async def get_employees():
     return EMPLOYEES_DB
 
-# Отображение страницы с графиком работы
-#@app.get("/schedule", response_class=HTMLResponse)
-#async def schedule_page(request: Request):
-#    return templates.TemplateResponse(request=request, name="schedule.html")
-
-# Отображение страницы с планом и фактом продаж
-#@app.get("/sales", response_class=HTMLResponse)
-#async def sales_page(request: Request):
-#    return templates.TemplateResponse(request=request, name="sales.html")
-
 # Отображение страницы с зарплатой
 @app.get("/salary", response_class=HTMLResponse)
 async def salary_page(request: Request):
@@ -173,13 +181,7 @@ async def achievements_page(request: Request):
 # 2. Принимаем Payload (передаем схему в аргументы функции)
 @app.post("/employees")
 async def create_employee(employee: EmployeeCreateSchema) -> EmployeeSchema:
-    # Считаем всех текущих сотрудников, у которых статус НЕ "уволен"
-    active_count = sum(1 for emp in EMPLOYEES_DB.values() if emp.status != EmployeeStatus.FIRED)
-    if active_count >= MAX_ACTIVE_EMPLOYEES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Нельзя оформить больше {MAX_ACTIVE_EMPLOYEES} работающих сотрудников"
-        )
+    check_active_employees_limit()
 
     # Достаем параметры по ключу статуса
     conditions = STATUS_CONFIG[employee.status]
@@ -216,14 +218,7 @@ async def update_employee(employee_id: str, employee: EmployeeUpdateSchema):
         and stored_employee.status == EmployeeStatus.FIRED
         and employee.status != EmployeeStatus.FIRED
     ):
-        active_count = sum(
-            1 for emp in EMPLOYEES_DB.values() if emp.status != EmployeeStatus.FIRED
-        )
-        if active_count >= MAX_ACTIVE_EMPLOYEES:
-            raise HTTPException(
-                status_code=400,
-                detail=f"В штате уже максимум работающих сотрудников"
-            )
+        check_active_employees_limit()
 
     # 2. Обновляем имя и фамилию, если они переданы
     if employee.first_name is not None:
@@ -257,14 +252,11 @@ async def delete_employee(employee_id: str):
     return deleted_employee
 
 
+
 # 2. Обновляем рендер страницы: передаём только НЕ уволенных сотрудников и текущий график
 @app.get("/schedule", response_class=HTMLResponse)
 async def schedule_page(request: Request):
-    active_employees = {
-        emp_id: emp
-        for emp_id, emp in EMPLOYEES_DB.items()
-        if emp.status != EmployeeStatus.FIRED
-    }
+    active_employees = get_active_employees()
     return templates.TemplateResponse(
         request=request,
         name="schedule.html",
@@ -292,11 +284,7 @@ async def save_schedule(items: list[EmployeeScheduleSchema]):
 # Обновляем рендер страницы продаж (передаём сохранённые данные, если уже нажимали «Сформировать»)
 @app.get("/sales", response_class=HTMLResponse)
 async def sales_page(request: Request):
-    active_employees = {
-        emp_id: emp
-        for emp_id, emp in EMPLOYEES_DB.items()
-        if emp.status != EmployeeStatus.FIRED
-    }
+    active_employees = get_active_employees()
     total_plan = sum(emp.sales_plan for emp in active_employees.values())
     company_sales = sum(
         SALES_DB[emp_id]["total"]
@@ -328,11 +316,7 @@ async def sales_page(request: Request):
 # Эндпоинт генерации и сохранения факта продаж по нажатию кнопки «Сформировать»
 @app.post("/api/sales/generate")
 async def generate_sales():
-    active_employees = {
-        emp_id: emp
-        for emp_id, emp in EMPLOYEES_DB.items()
-        if emp.status != EmployeeStatus.FIRED
-    }
+    active_employees = get_active_employees()
 
     if not active_employees:
         raise HTTPException(status_code=400, detail="Нет активных сотрудников")
@@ -403,4 +387,68 @@ async def generate_sales():
         "fact_rows": fact_rows,
         "period_totals": period_totals,  # <-- Возвращаем на фронтенд
         "total_company_sales": total_company_sales,
+    }
+
+
+# Эндпоинт генерации и сохранения зарплаты по нажатию кнопки «Сформировать»
+@app.post("/api/salary/generate")
+async def generate_sales():
+    active_employees = get_active_employees()
+    
+    if not active_employees:
+        raise HTTPException(status_code=400, detail="Нет активных сотрудников")
+
+    # Проверяем, что для всех работающих сотрудников заполнен график
+    missing_schedule = [
+        f"{emp.first_name} {emp.last_name}"
+        for emp_id, emp in active_employees.items()
+        if emp_id not in SCHEDULE_DB
+    ]
+    if missing_schedule:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Сначала сформируйте график работы для: {', '.join(missing_schedule)}"
+        )
+
+    # Проверяем, что для всех работающих сотрудников сформированы продажи
+    if len(SALES_DB) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail = f"Сначала сформируйте продажи"
+        )
+
+    kpi_rows = []
+    total_company_plan = 0
+    total_company_fact = 0
+
+    # Формируем список с id, ФИО, должностью и планом продаж по кажому сотруднику
+    for emp_id, emp in active_employees.items():
+            full_name = f"{emp.first_name} {emp.last_name}"
+            total_company_plan += emp.sales_plan
+            sales_fact = SALES_DB[id]["total"]
+            total_company_fact += sales_fact
+            percent_sales = int(round(sales_fact / emp.sales_plan * 100))
+            hours_fact = sum(SCHEDULE_DB[id])
+            differ_hours = hours_fact - emp.hours_plan
+    
+            kpi_rows.append({
+                "employee_id": emp_id,
+                "full_name": full_name,
+                "status": emp.status.value,
+                "sales_plan": emp.sales_plan,
+                "hours_plan": emp.hours_plan,
+                "base_salary": emp.base_salary,
+                "sales_fact": sales_fact,
+                "percent_sales": percent_sales,
+                "hours_fact": hours_fact,
+                "differ_hours": differ_hours,
+            })
+
+    total_percent = int(round(total_company_fact / total_company_plan * 100))
+
+    return {
+        "kpi_rows": kpi_rows,
+        "total_company_plan": total_company_plan,
+        "total_company_fact": total_company_fact,
+        "total_percent": total_percent,
     }

@@ -31,10 +31,10 @@ SALES_DB = {
 a = 3200
 b = 3000
 
-c = int(round(a/b*100))
+c = round(a/b*100, 1)
 
 print(c)
 
 
-for id, data in SALES_DB.items():
-    print(sum(SCHEDULE_DB[id]))
+#for id, data in SALES_DB.items():
+#    print(sum(SCHEDULE_DB[id]))

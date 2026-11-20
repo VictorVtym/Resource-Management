@@ -1,8 +1,127 @@
 {% extends 'base.html' %}
 
-{% block title %}Управление сотрудниками | HiTech-Club{% endblock %}
+{% block title %}Расчёт заработной платы{% endblock %}
 
 {% block content %}
-Это страница зарплаты
+<div class="container-schedule">
+    <div class="sales-header">
+        <h2>Расчёт заработной платы</h2>
+        <button type="button" id="generate-salary-btn" class="btn-save-schedule">Сформировать</button>
+    </div>
 
+    {% set rows = salary_data.get("kpi_rows", []) %}
+    <div id="salary-tables-wrapper" style="display: {{ 'block' if rows else 'none' }};">
+
+        <!-- Таблица 1 -->
+        <h3>1. Расчёт премии от выполнения личного плана продаж</h3>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>План личных продаж</th>
+                    <th>Факт личных продаж</th>
+                    <th>% выполнения</th>
+                    <th>Сумма премии</th>
+                </tr>
+            </thead>
+            <tbody id="personal-sales-tbody">
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ "{:,}".format(row.sales_plan).replace(",", " ") }}</td>
+                    <td>{{ "{:,}".format(row.sales_fact).replace(",", " ") }}</td>
+                    <td>{{ row.percent_sales }}%</td>
+                    <td>{{ "{:,}".format(row.employee_sales_bonus).replace(",", " ") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Таблица 2 -->
+        <h3 style="margin-top: 28px;">2. Расчёт премии от выполнения нормы часов</h3>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>План часов</th>
+                    <th>Факт часов</th>
+                    <th>Отклонение от нормы часов</th>
+                    <th>Сумма премии</th>
+                </tr>
+            </thead>
+            <tbody id="hours-bonus-tbody">
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.hours_plan }}</td>
+                    <td>{{ row.hours_fact }}</td>
+                    <td>{{ "+" ~ row.differ_hours if row.differ_hours > 0 else row.differ_hours }}</td>
+                    <td>{{ "{:,}".format(row.employee_hours_bonus).replace(",", " ") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Таблица 3 -->
+        <h3 style="margin-top: 28px;">3. Расчёт премии от выполнения общего плана продаж</h3>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>План продаж</th>
+                    <th>Факт продаж</th>
+                    <th>% выполнения</th>
+                    <th>Сумма премии</th>
+                </tr>
+            </thead>
+            <tbody id="company-sales-tbody">
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ "{:,}".format(salary_data.total_company_plan).replace(",", " ") }}</td>
+                    <td>{{ "{:,}".format(salary_data.total_company_fact).replace(",", " ") }}</td>
+                    <td>{{ salary_data.total_company_percent }}%</td>
+                    <td>{{ "{:,}".format(salary_data.company_sales_bonus).replace(",", " ") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Таблица 4 -->
+        <h3 style="margin-top: 28px;">4. Расчёт заработной платы</h3>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>Оклад</th>
+                    <th>Премия</th>
+                    <th>Итого</th>
+                </tr>
+            </thead>
+            <tbody id="total-salary-tbody">
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ "{:,}".format(row.base_salary).replace(",", " ") }}</td>
+                    <td>{{ "{:,}".format(row.bonus_salary).replace(",", " ") }}</td>
+                    <td><strong>{{ "{:,}".format(row.total_salary).replace(",", " ") }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+
+<script src="/static/salary.js"></script>
 {% endblock %}

@@ -27,6 +27,8 @@ SCHEDULE_DB: dict[str, list[bool]] = {}
 # Формат: {emp_id: {"periods": [int | None, ...], "total": int}}
 SALES_DB: dict[str, dict] = {}
 
+SALARY_DB: dict = {}
+
 MAX_ACTIVE_EMPLOYEES = 5
 
 # 1. Ограничиваем возможные значения статуса
@@ -46,9 +48,9 @@ STATUS_CONFIG = {
 
 # Диапазоны случайных значений для расчёта продаж по статусам
 SALES_RANGES = {
-    EmployeeStatus.INTERN: (5000, 14000),
-    EmployeeStatus.MANAGER: (12000, 21000),
-    EmployeeStatus.LEAD_MANAGER: (15000, 24000),
+    EmployeeStatus.INTERN: (4000, 16000),
+    EmployeeStatus.MANAGER: (10000, 26000),
+    EmployeeStatus.LEAD_MANAGER: (12000, 28000),
 }
 
 
@@ -146,10 +148,48 @@ def get_active_employees(
 
 
 def check_active_employees_limit(
-    detail: str = f"Нельзя оформить больше {MAX_ACTIVE_EMPLOYEES} работающих сотрудников",
-) -> None:
+        detail: str = f"Нельзя оформить больше {MAX_ACTIVE_EMPLOYEES} работающих сотрудников",
+        ) -> None:
     if len(get_active_employees()) >= MAX_ACTIVE_EMPLOYEES:
         raise HTTPException(status_code=400, detail=detail)
+
+
+def get_employee_sales_bonus(full_name: str, percent_sales: float) -> int:
+    if percent_sales < 80:
+        return 0
+    elif percent_sales < 90:
+        return 8000
+    elif percent_sales < 97:
+        return 9000
+    elif percent_sales < 110:
+        return 10000
+    elif percent_sales < 130:
+        return 11000
+    elif percent_sales >= 130:
+        return 12000
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Неверное значение процента продаж по сотруднику {full_name}"
+        )
+
+
+def get_company_sales_bonus(total_percent: float) -> int:
+    if total_percent < 85:
+        return 0
+    elif total_percent < 97:
+        return 4000
+    elif total_percent < 103:
+        return 5000
+    elif total_percent < 110:
+        return 6000
+    elif total_percent >= 110:
+        return 7000
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Неверное значение процента продаж по компании"
+        )
 
 
 # Выводим данные о сотрудниках на страницу сайта. Эта фнукция нужна для передачи информации браузеру (html)
@@ -169,9 +209,9 @@ async def get_employees():
     return EMPLOYEES_DB
 
 # Отображение страницы с зарплатой
-@app.get("/salary", response_class=HTMLResponse)
-async def salary_page(request: Request):
-    return templates.TemplateResponse(request=request, name="salary.html")
+#@app.get("/salary", response_class=HTMLResponse)
+#async def salary_page(request: Request):
+#    return templates.TemplateResponse(request=request, name="salary.html")
 
 # Отображение страницы с достижениями
 @app.get("/achievements", response_class=HTMLResponse)
@@ -232,6 +272,7 @@ async def update_employee(employee_id: str, employee: EmployeeUpdateSchema):
         conditions = STATUS_CONFIG[employee.status]
         stored_employee.base_salary = conditions["base_salary"]
         stored_employee.hours_plan = conditions["hours_plan"]
+        stored_employee.sales_plan = conditions["sales_plan"]
 
         # Если статус стал "уволен" — ставим сегодняшнюю дату, иначе сбрасываем
         if employee.status == EmployeeStatus.FIRED:
@@ -390,9 +431,19 @@ async def generate_sales():
     }
 
 
+# Обновляем рендер страницы зарплаты (чтобы данные сохранялись после перезагрузки)
+@app.get("/salary", response_class=HTMLResponse)
+async def salary_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="salary.html",
+        context={"salary_data": SALARY_DB}
+    )
+
+
 # Эндпоинт генерации и сохранения зарплаты по нажатию кнопки «Сформировать»
 @app.post("/api/salary/generate")
-async def generate_sales():
+async def generate_salary():
     active_employees = get_active_employees()
     
     if not active_employees:
@@ -410,45 +461,68 @@ async def generate_sales():
             detail=f"Сначала сформируйте график работы для: {', '.join(missing_schedule)}"
         )
 
-    # Проверяем, что для всех работающих сотрудников сформированы продажи
-    if len(SALES_DB) == 0:
+    # Проверяем наличие продаж для КАЖДОГО активного сотрудника
+    missing_sales = [
+        f"{emp.first_name} {emp.last_name}"
+        for emp_id, emp in active_employees.items()
+        if emp_id not in SALES_DB
+    ]
+    if missing_sales:
         raise HTTPException(
             status_code=400,
-            detail = f"Сначала сформируйте продажи"
+            detail="Сначала сформируйте продажи"
         )
 
     kpi_rows = []
-    total_company_plan = 0
-    total_company_fact = 0
+    #total_company_plan = 0
+    #total_company_fact = 0
+    total_company_plan = sum(emp.sales_plan for emp in active_employees.values())
+    total_company_fact = sum(SALES_DB[emp_id]["total"] for emp_id in active_employees)
+    total_company_percent = round((total_company_fact / total_company_plan * 100), 1) if total_company_plan else 0
+    company_sales_bonus = get_company_sales_bonus(total_company_percent)
+
 
     # Формируем список с id, ФИО, должностью и планом продаж по кажому сотруднику
     for emp_id, emp in active_employees.items():
             full_name = f"{emp.first_name} {emp.last_name}"
-            total_company_plan += emp.sales_plan
-            sales_fact = SALES_DB[id]["total"]
-            total_company_fact += sales_fact
-            percent_sales = int(round(sales_fact / emp.sales_plan * 100))
-            hours_fact = sum(SCHEDULE_DB[id])
+            sales_fact = SALES_DB[emp_id]["total"]
+            percent_sales = round((sales_fact / emp.sales_plan * 100), 1) if emp.sales_plan else 0
+            hours_fact = sum(SCHEDULE_DB[emp_id])
             differ_hours = hours_fact - emp.hours_plan
+            employee_sales_bonus = get_employee_sales_bonus(full_name, percent_sales)
+            employee_hours_bonus = 10000 + (differ_hours * 3000)
+            bonus_salary = employee_sales_bonus + company_sales_bonus + employee_hours_bonus
+            total_salary = emp.base_salary + employee_sales_bonus + company_sales_bonus + employee_hours_bonus
     
             kpi_rows.append({
                 "employee_id": emp_id,
                 "full_name": full_name,
                 "status": emp.status.value,
+
                 "sales_plan": emp.sales_plan,
-                "hours_plan": emp.hours_plan,
-                "base_salary": emp.base_salary,
                 "sales_fact": sales_fact,
                 "percent_sales": percent_sales,
+                "employee_sales_bonus": employee_sales_bonus,
+
+                "hours_plan": emp.hours_plan,
                 "hours_fact": hours_fact,
                 "differ_hours": differ_hours,
+                "employee_hours_bonus": employee_hours_bonus,
+
+                "base_salary": emp.base_salary,
+                "bonus_salary": bonus_salary,
+                "total_salary": total_salary,
             })
 
-    total_percent = int(round(total_company_fact / total_company_plan * 100))
-
-    return {
+    result =  {
         "kpi_rows": kpi_rows,
         "total_company_plan": total_company_plan,
         "total_company_fact": total_company_fact,
-        "total_percent": total_percent,
+        "total_company_percent": total_company_percent,
+        "company_sales_bonus": company_sales_bonus,
     }
+
+    SALARY_DB.clear()
+    SALARY_DB.update(result)
+
+    return result
